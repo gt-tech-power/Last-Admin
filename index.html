@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prometheus Code: The Last Admin — আশরাফুল ইসলাম</title>
+    <!-- বাংলা ও ইংরেজি স্টাইলিশ ফন্ট -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-deep: #07090f;
+            --card-bg: rgba(14, 19, 31, 0.88);
+            --accent-cyan: #00f2fe;
+            --accent-solar: #ff8c00;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --font-size: 18px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: 'Hind Siliguri', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* কম্পিউটারের জন্য বড় ছবি (computer.png) */
+        .theme-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(to bottom, rgba(5, 7, 12, 0.6), rgba(5, 7, 12, 0.85)), url('computer.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        /* মোবাইলের স্ক্রিনের জন্য পোর্ট্রেট ছবি (mobile.png) */
+        @media (max-width: 768px) {
+            .theme-background {
+                background: linear-gradient(to bottom, rgba(5, 7, 12, 0.6), rgba(5, 7, 12, 0.85)), url('mobile.png');
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+            }
+        }
+
+        /* =========================================
+           ১. ল্যান্ডিং / কভার স্ক্রিন
+           ========================================= */
+        #cover-screen {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            text-align: center;
+            padding: 40px 20px;
+            z-index: 100;
+            background: rgba(5, 7, 12, 0.4);
+            backdrop-filter: blur(3px);
+            transition: opacity 0.8s ease, transform 0.8s ease, visibility 0.8s;
+        }
+
+        #cover-screen.hidden {
+            opacity: 0;
+            transform: scale(1.05);
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .badge {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            letter-spacing: 3px;
+            color: var(--accent-solar);
+            border: 1px solid rgba(255, 140, 0, 0.5);
+            padding: 6px 16px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            background: rgba(5, 7, 12, 0.75);
+            text-transform: uppercase;
+        }
+
+        .novel-title-btn {
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: inherit;
+            transition: transform 0.3s ease;
+        }
+
+        .novel-title-btn:hover {
+            transform: translateY(-4px);
+        }
+
+        .main-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 800;
+            line-height: 1.15;
+            background: linear-gradient(135deg, #ffffff 20%, #00f2fe 60%, #ff8c00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
+            margin-bottom: 12px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-main);
+            max-width: 600px;
+            margin: 0 auto 20px;
+            line-height: 1.5;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+            background: rgba(5, 7, 12, 0.65);
+            padding: 10px 18px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        /* প্রফেশনাল লেখকের ব্যাজ (কভার পেজ) */
+        .cover-author-box {
+            margin-bottom: 24px;
+            background: rgba(7, 9, 15, 0.85);
+            padding: 8px 22px;
+            border-radius: 50px;
+            border: 1px solid rgba(0, 242, 254, 0.35);
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .author-name-text {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+        }
+
+        .author-bio-trigger {
+            background: rgba(0, 242, 254, 0.12);
+            border: 1px solid rgba(0, 242, 254, 0.4);
+            color: var(--accent-cyan);
+            font-family: 'Hind Siliguri', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 3px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .author-bio-trigger:hover {
+            background: var(--accent-cyan);
+            color: #05070c;
+        }
+
+        .start-btn {
+            font-family: 'Hind Siliguri', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #05070c;
+            background: linear-gradient(90deg, var(--accent-cyan), #4facfe);
+            border: none;
+            padding: 14px 38px;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 0 25px rgba(0, 242, 254, 0.5);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 35px rgba(0, 242, 254, 0.8);
+        }
+
+        /* =========================================
+           ২. রিডার ও ম্যাগাজিন ইন্টারফেস
+           ========================================= */
+        #reader-container {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+            padding-top: 75px;
+            padding-bottom: 80px;
+        }
+
+        #reader-container.visible {
+            display: block;
+            opacity: 1;
+        }
+
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: rgba(7, 9, 15, 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 5%;
+            z-index: 50;
+        }
+
+        .progress-line {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-solar));
+            transition: width 0.1s;
+        }
+
+        .bar-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.95rem;
+            color: var(--accent-cyan);
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ctrl-btn {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--text-main);
+            padding: 5px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .ctrl-btn:hover {
+            background: rgba(0, 242, 254, 0.2);
+            border-color: var(--accent-cyan);
+        }
+
+        .zoom-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            min-width: 45px;
+            text-align: center;
+        }
+
+        .magazine-sheet {
+            max-width: 820px;
+            margin: 20px auto;
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: clamp(24px, 5vw, 60px);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(14px);
+            position: relative;
+        }
+
+        .mag-header {
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 28px;
+            margin-bottom: 40px;
+        }
+
+        .mag-issue {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
+            color: var(--accent-solar);
+            letter-spacing: 2.5px;
+            margin-bottom: 10px;
+        }
+
+        .mag-header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.6rem, 4vw, 2.5rem);
+            color: #ffffff;
+            margin-bottom: 12px;
+        }
+
+        .mag-meta {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.04);
+            padding: 6px 18px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .reader-author-name {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        /* স্টাইলিশ টেক্সট লেআউট */
+        .chapter {
+            margin-bottom: 55px;
+        }
+
+        .chapter-title {
+            font-size: 1.45em;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            margin-bottom: 22px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed rgba(0, 242, 254, 0.25);
+            line-height: 1.4;
+        }
+
+        .story-content {
+            font-size: var(--font-size);
+            line-height: 1.9;
+            color: var(--text-main);
+        }
+
+        .story-content p {
+            margin-bottom: 1.35em;
+            text-align: justify;
+        }
+
+        /* ড্রপ-ক্যাপ */
+        .chapter p.paragraph-text:first-of-type::first-letter {
+            font-size: 2.6em;
+            font-weight: 700;
+            float: left;
+            line-height: 1;
+            margin-right: 10px;
+            color: var(--accent-solar);
+        }
+
+        /* ডায়ালগ হাইলাইট বক্স স্টাইল */
+        .dialogue-box {
+            margin: 26px 0;
+            padding: 18px 22px;
+            background: linear-gradient(90deg, rgba(0, 242, 254, 0.08), rgba(14, 19, 31, 0.4));
+            border-left: 4px solid var(--accent-cyan);
+            border-radius: 0 10px 10px 0;
+        }
+
+        .dialogue-box.danger {
+            background: linear-gradient(90deg, rgba(255, 140, 0, 0.1), rgba(14, 19, 31, 0.4));
+            border-left-color: var(--accent-solar);
+        }
+
+        .speaker {
+            display: block;
+            font-size: 0.88em;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin-bottom: 6px;
+        }
+
+        .dialogue-box.danger .speaker {
+            color: var(--accent-solar);
+        }
+
+        .quote-text {
+            font-style: italic;
+            color: #ffffff;
+        }
+
+        .to-be-continued {
+            text-align: center;
+            padding: 35px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 40px;
+        }
+
+        .to-be-continued span {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--accent-solar);
+            letter-spacing: 2px;
+            font-size: 0.95rem;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        /* =========================================
+           ৩. প্রফেশনাল লেখক পরিচিতি পপ-আপ মোডাল
+           ========================================= */
+        #author-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 7, 12, 0.88);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.35s ease, visibility 0.35s ease;
+        }
+
+        #author-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-card {
+            background: linear-gradient(145deg, rgba(16, 22, 36, 0.98), rgba(10, 14, 24, 0.98));
+            border: 1px solid rgba(0, 242, 254, 0.35);
+            border-radius: 22px;
+            padding: 38px 32px;
+            max-width: 480px;
+            width: 92%;
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(0, 242, 254, 0.12);
+            position: relative;
+            transform: translateY(25px) scale(0.97);
+            transition: transform 0.35s ease;
+        }
+
+        #author-modal.active .modal-card {
+            transform: translateY(0) scale(1);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            color: var(--text-muted);
+            font-size: 1.3rem;
+            line-height: 1;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-modal:hover {
+            background: rgba(255, 140, 0, 0.2);
+            color: var(--accent-solar);
+            border-color: var(--accent-solar);
+        }
+
+        .avatar-wrapper {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 18px;
+            border-radius: 50%;
+            padding: 4px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-solar));
+            box-shadow: 0 0 25px rgba(0, 242, 254, 0.35);
+        }
+
+        .author-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            background-color: #07090f;
+            display: block;
+        }
+
+        .modal-author-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .modal-author-dob {
+            font-size: 0.88rem;
+            color: var(--accent-solar);
+            font-weight: 500;
+            margin-bottom: 16px;
+            letter-spacing: 0.5px;
+        }
+
+        .modal-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0, 242, 254, 0.3), transparent);
+            margin-bottom: 18px;
+        }
+
+        .modal-author-bio {
+            font-size: 0.98rem;
+            color: var(--text-main);
+            line-height: 1.75;
+            text-align: justify;
+        }
+
+        @media (max-width: 600px) {
+            .story-content p, .modal-author-bio {
+                text-align: left;
+            }
+            .bar-title {
+                font-size: 0.8rem;
+            }
+            .cover-author-box {
+                flex-wrap: wrap;
+                justify-content: center;
+                border-radius: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="theme-background"></div>
+
+    <!-- ১. কভার স্ক্রিন -->
+    <section id="cover-screen">
+        <div class="badge">SCI-FI THRILLER NOVEL • 2026</div>
+        
+        <button class="novel-title-btn" onclick="openNovel()" title="উপন্যাসটি পড়তে ক্লিক করুন">
+            <h1 class="main-title">PROMETHEUS CODE:<br>THE LAST ADMIN</h1>
+        </button>
+        
+        <p class="subtitle">
+            যান্ত্রিক সাম্রাজ্যের অন্ধকার ভেদ করে এক ১৮ বছর বয়সী তরুণের অসম লড়াই—যেখানে পৃথিবীর ভাগ্য বন্দি একটিমাত্র অ্যাডমিন প্যানেলে।
+        </p>
+
+        <!-- প্রফেশনাল লেখকের নাম ও পরিচিতি বাটন (কভার পেজ) -->
+        <div class="cover-author-box">
+            <span style="color: var(--text-muted); font-size: 0.9rem;">লেখক:</span>
+            <span class="author-name-text">আশরাফুল ইসলাম</span>
+            <button class="author-bio-trigger" onclick="openAuthorModal()">লেখক পরিচিতি</button>
+        </div>
+
+        <button class="start-btn" onclick="openNovel()">
+            <span>উপন্যাসটি পড়ুন</span>
+            <span>&#8594;</span>
+        </button>
+    </section>
+
+    <!-- ২. মূল ম্যাগাজিন রিডার -->
+    <div id="reader-container">
+        <header class="top-bar">
+            <div class="bar-title" onclick="backToCover()" title="কভারে ফিরে যান">PROMETHEUS CODE</div>
+            
+            <div class="controls">
+                <button class="ctrl-btn" onclick="changeZoom(-2)" title="লেখা ছোট করুন">A-</button>
+                <span class="zoom-label" id="zoom-percent">100%</span>
+                <button class="ctrl-btn" onclick="changeZoom(2)" title="লেখা বড় করুন">A+</button>
+                <button class="ctrl-btn" onclick="resetZoom()" title="রিসেট">Reset</button>
+            </div>
+
+            <div class="progress-line" id="progress-bar"></div>
+        </header>
+
+        <main class="magazine-sheet">
+            <div class="mag-header">
+                <div class="mag-issue">DIGITAL EDITION • CHAPTERS 01 — 05</div>
+                <h1>Prometheus Code: The Last Admin</h1>
+                <div class="mag-meta">
+                    <span>রচনা: <span class="reader-author-name">আশরাফুল ইসলাম</span></span>
+                    <button class="author-bio-trigger" onclick="openAuthorModal()">লেখক পরিচিতি</button>
+                </div>
+            </div>
+
+            <!-- নোট ফাইল থেকে অটোমেটিক টেক্সট লোড হয়ে এখানে বসবে -->
+            <article class="story-content" id="story-body">
+                <p style="text-align: center; color: var(--text-muted);">উপন্যাস লোড হচ্ছে...</p>
+            </article>
+
+            <div class="to-be-continued">
+                <span>[ TO BE CONTINUED... ]</span>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">পরবর্তী অধ্যায়ের অপেক্ষায়...</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- ৩. লেখক পরিচিতি পপ-আপ মোডাল -->
+    <div id="author-modal" onclick="closeAuthorModal()">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <button class="close-modal" onclick="closeAuthorModal()" title="বন্ধ করুন">&times;</button>
+            
+            <div class="avatar-wrapper">
+                <!-- আপনার গোল করে কাটা PNG প্রোফাইল ছবি (profile.png) -->
+                <img src="profile.png" alt="আশরাফুল ইসলাম" class="author-avatar" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2300f2fe\' stroke-width=\'1.8\'><path d=\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\'></path><circle cx=\'12\' cy=\'7\' r=\'4\'></circle></svg>'">
+            </div>
+            
+            <h2 class="modal-author-name">আশরাফুল ইসলাম</h2>
+            <div class="modal-author-dob">জন্ম: ১ জুলাই, ২০১০ • লেখক ও প্রযুক্তি প্রেমী</div>
+            <div class="modal-divider"></div>
+            
+            <p class="modal-author-bio">
+                আশরাফুল ইসলাম জন্মগ্রহণ করেন ২০১০ সালের ১ জুলাই। তিনি লেখালেখির পাশাপাশি বিজ্ঞান, কোডিং এবং প্রযুক্তি নিয়ে কাজ করতে ভালোবাসেন। বিশেষ করে সায়েন্স ফিকশন এবং টেক-থ্রিলার ঘরানার গল্প লেখার প্রতি তার গভীর আগ্রহ রয়েছে। বর্তমান সময়ের প্রযুক্তিগত ও যান্ত্রিক অগ্রগতির ভাবনা এবং মানুষের টিকে থাকার লড়াইকে ফুটিয়ে তুলতেই তিনি 'Prometheus Code: The Last Admin' উপন্যাসটি রচনা করেছেন। প্রযুক্তির দুনিয়ায় নিত্যনতুন আবিষ্কারের সাথে পথচলাই তার মূল অনুপ্রেরণা।
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let currentFontSize = 18;
+        const baseFontSize = 18;
+
+        function openNovel() {
+            const cover = document.getElementById('cover-screen');
+            const reader = document.getElementById('reader-container');
+            
+            cover.classList.add('hidden');
+            setTimeout(() => {
+                reader.classList.add('visible');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 300);
+        }
+
+        function backToCover() {
+            const cover = document.getElementById('cover-screen');
+            const reader = document.getElementById('reader-container');
+            
+            reader.classList.remove('visible');
+            cover.classList.remove('hidden');
+        }
+
+        // লেখক পরিচিতি মোডাল ওপেন ও ক্লোজ
+        function openAuthorModal() {
+            document.getElementById('author-modal').classList.add('active');
+        }
+
+        function closeAuthorModal() {
+            document.getElementById('author-modal').classList.remove('active');
+        }
+
+        // Escape কী চাপলে মোডাল বন্ধ হবে
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeAuthorModal();
+        });
+
+        function changeZoom(delta) {
+            currentFontSize += delta;
+            if (currentFontSize < 14) currentFontSize = 14;
+            if (currentFontSize > 30) currentFontSize = 30;
+            
+            document.documentElement.style.setProperty('--font-size', currentFontSize + 'px');
+            const percent = Math.round((currentFontSize / baseFontSize) * 100);
+            document.getElementById('zoom-percent').innerText = percent + '%';
+        }
+
+        function resetZoom() {
+            currentFontSize = baseFontSize;
+            document.documentElement.style.setProperty('--font-size', currentFontSize + 'px');
+            document.getElementById('zoom-percent').innerText = '100%';
+        }
+
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollPercent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            document.getElementById('progress-bar').style.width = scrollPercent + '%';
+        });
+
+        // নোট ফাইল (The_Last_Admin.txt) থেকে টেক্সট লোড ও পার্স করা
+        window.addEventListener('DOMContentLoaded', () => {
+            fetch('The_Last_Admin.txt')
+                .then(response => {
+                    if (!response.ok) throw new Error('ফাইলটি পাওয়া যায়নি!');
+                    return response.text();
+                })
+                .then(data => {
+                    const container = document.getElementById('story-body');
+                    container.innerHTML = parseNovelText(data);
+                })
+                .catch(error => {
+                    document.getElementById('story-body').innerHTML = `<p style="color: #ff8c00; text-align: center;">নোট ফাইল লোড করতে সমস্যা হয়েছে: ${error.message}<br>দয়া করে নিশ্চিত করুন যে The_Last_Admin.txt ফাইলটি একই ফোল্ডারে আছে।</p>`;
+                });
+        });
+
+        function parseNovelText(text) {
+            const chapters = text.split(/(?=অধ্যায়\s+[০-৯0-9]+:)/);
+            let htmlOutput = '';
+
+            chapters.forEach(chap => {
+                if (!chap.trim()) return;
+                const lines = chap.trim().split('\n');
+                let currentChapterTitle = '';
+                let paragraphs = [];
+                let i = 0;
+
+                while (i < lines.length) {
+                    let line = lines[i].trim();
+                    if (!line) { i++; continue; }
+
+                    if (line.startsWith('অধ্যায়')) {
+                        currentChapterTitle = line;
+                        i++;
+                    } else if (line.includes(':') && (line.includes('(') || i + 1 < lines.length && lines[i+1].trim().startsWith('"'))) {
+                        let speaker = line;
+                        let dialogue = '';
+                        i++;
+                        while (i < lines.length && lines[i].trim() !== '') {
+                            dialogue += ' ' + lines[i].trim();
+                            i++;
+                        }
+                        
+                        let isDanger = speaker.includes('ভিক্টর') || speaker.includes('ওয়ার্নিং') || (speaker.includes('প্রফেসর') && speaker.includes('পিস্তল'));
+                        let boxClass = isDanger ? 'dialogue-box danger' : 'dialogue-box';
+                        
+                        paragraphs.push(`
+                            <div class="${boxClass}">
+                                <span class="speaker">${speaker}</span>
+                                <span class="quote-text">${dialogue.trim()}</span>
+                            </div>
+                        `);
+                    } else {
+                        paragraphs.push(`<p class="paragraph-text">${line}</p>`);
+                        i++;
+                    }
+                }
+
+                htmlOutput += `
+                    <section class="chapter">
+                        <h2 class="chapter-title">${currentChapterTitle}</h2>
+                        ${paragraphs.join('')}
+                    </section>
+                `;
+            });
+
+            return htmlOutput;
+        }
+    </script>
+</body>
+</html>
